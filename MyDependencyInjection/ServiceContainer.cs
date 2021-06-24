@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MyDependencyInjection
 {
@@ -12,11 +13,11 @@ namespace MyDependencyInjection
             _serviceDescriptors = serviceDescriptors ?? throw new ArgumentNullException(nameof(serviceDescriptors));
         }
 
-        public T GetService<T>()
+        public object GetService(Type serviceType)
         {
-            if (!_serviceDescriptors.TryGetValue(typeof(T), out var serviceDescriptor))
+            if (!_serviceDescriptors.TryGetValue(serviceType, out var serviceDescriptor))
             {
-                throw new ArgumentException($"There is no service of type {typeof(T)} registered");
+                throw new ArgumentException($"There is no service of type {serviceType.Name} registered");
             }
 
             if (serviceDescriptor.Lifetime == ServiceLifetime.Singleton)
@@ -24,19 +25,28 @@ namespace MyDependencyInjection
                 if (serviceDescriptor.Implementation == null)
                 {
                     var typeToInstantiate = serviceDescriptor.ImplementationType ?? serviceDescriptor.ServiceType;
-                    var instance = Activator.CreateInstance(typeToInstantiate);
+
+                    var ctor = typeToInstantiate.GetConstructors().SingleOrDefault();
+                    var ctorArgs = ctor.GetParameters().Select(x => GetService(x.ParameterType)).ToArray();
+
+                    var instance = Activator.CreateInstance(typeToInstantiate, ctorArgs);
                     serviceDescriptor.Implementation = instance;
                 }
 
-                return (T) serviceDescriptor.Implementation;
+                return serviceDescriptor.Implementation;
             }
-            if (serviceDescriptor.Lifetime == ServiceLifetime.Transient)
-            {
-                var instance = Activator.CreateInstance<T>();
-                return instance;
-            }
+            //if (serviceDescriptor.Lifetime == ServiceLifetime.Transient)
+            //{
+            //    var instance = Activator.CreateInstance<T>();
+            //    return instance;
+            //}
 
             throw new NotImplementedException();
+        }
+
+        public T GetService<T>()
+        {
+            return (T)GetService(typeof(T));
         }
     }
 }

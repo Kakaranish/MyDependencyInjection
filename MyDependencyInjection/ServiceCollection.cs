@@ -10,6 +10,11 @@ namespace MyDependencyInjection
         public void RegisterSingleton<T>()
         {
             var serviceDescriptor = new ServiceDescriptor(typeof(T), ServiceLifetime.Singleton);
+            if (!HasExactlyOneCtor(typeof(T)))
+            {
+                throw new ArgumentException("Service has multiple constructors");
+            }
+            
             if(!_serviceDescriptors.TryAdd(typeof(T), serviceDescriptor))
             {
                 throw new ArgumentException("Service is already registered");
@@ -28,6 +33,16 @@ namespace MyDependencyInjection
         public void RegisterSingleton<TService, TServiceImpl>() where TServiceImpl : TService
         {
             var serviceDescriptor = new ServiceDescriptor(typeof(TService), typeof(TServiceImpl), ServiceLifetime.Singleton);
+            if (!HasExactlyOneCtor(typeof(TServiceImpl)))
+            {
+                throw new ArgumentException("Service implementation has multiple constructors");
+            }
+
+            if (typeof(TServiceImpl).IsAbstract || typeof(TServiceImpl).IsInterface)
+            {
+                throw new ArgumentException("Service implementation cannot be abstract class or interface");
+            }
+
             if (!_serviceDescriptors.TryAdd(typeof(TService), serviceDescriptor))
             {
                 throw new ArgumentException("Service is already registered");
@@ -56,6 +71,11 @@ namespace MyDependencyInjection
         public ServiceContainer CreateServiceContainer()
         {
             return new(_serviceDescriptors);
+        }
+
+        private bool HasExactlyOneCtor(Type type)
+        {
+            return type.GetConstructors().Length == 1;
         }
     }
 }
