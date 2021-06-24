@@ -25,7 +25,12 @@ namespace MyDependencyInjection
                 return InstantiateService(serviceDescriptor);
             }
 
-            return serviceDescriptor.Implementation ?? (serviceDescriptor.Implementation = InstantiateService(serviceDescriptor));
+            if (serviceDescriptor.Implementation == null)
+            {
+                var serviceInstance = InstantiateService(serviceDescriptor);
+                serviceDescriptor.SetImplementation(serviceInstance);
+            }
+            return serviceDescriptor.Implementation;
         }
 
         private object InstantiateService(ServiceDescriptor serviceDescriptor)

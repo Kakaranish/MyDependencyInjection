@@ -1,4 +1,4 @@
-﻿using System;
+﻿using MyDependencyInjection.TestTypes;
 
 namespace MyDependencyInjection
 {

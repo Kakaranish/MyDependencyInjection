@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MyDependencyInjection
+namespace MyDependencyInjection.TestTypes
 {
     public class GuidProvider : IGuidProvider
     {
@@ -15,10 +15,5 @@ namespace MyDependencyInjection
         {
             return _guid;
         }
-    }
-
-    public interface IGuidProvider
-    {
-        Guid GetGuid();
     }
 }

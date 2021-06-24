@@ -1,4 +1,4 @@
-﻿namespace MyDependencyInjection
+﻿namespace MyDependencyInjection.TestTypes
 {
     public interface IGuidPrinter
     {

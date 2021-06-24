@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MyDependencyInjection
+namespace MyDependencyInjection.TestTypes
 {
     public class GuidPrinter : IGuidPrinter
     {

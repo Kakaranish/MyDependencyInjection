@@ -5,98 +5,92 @@ namespace MyDependencyInjection
 {
     public class ServiceCollection
     {
-        private readonly IDictionary<Type, ServiceDescriptor> _serviceDescriptors = new Dictionary<Type, ServiceDescriptor>();
-
-        public void RegisterSingleton<T>()
-        {
-            var serviceDescriptor = new ServiceDescriptor(typeof(T), ServiceLifetime.Singleton);
-            if (!HasExactlyOneCtor(typeof(T)))
-            {
-                throw new ArgumentException("Service has multiple constructors");
-            }
-            
-            if(!_serviceDescriptors.TryAdd(typeof(T), serviceDescriptor))
-            {
-                throw new ArgumentException("Service is already registered");
-            }
-        }
-
-        public void RegisterSingleton<T>(T serviceImplementation)
-        {
-            var serviceDescriptor = new ServiceDescriptor(typeof(T), serviceImplementation, ServiceLifetime.Singleton);
-            if (!_serviceDescriptors.TryAdd(typeof(T), serviceDescriptor))
-            {
-                throw new ArgumentException("Service is already registered");
-            }
-        }
-
-        public void RegisterSingleton<TService, TServiceImpl>() where TServiceImpl : TService
-        {
-            var serviceDescriptor = new ServiceDescriptor(typeof(TService), typeof(TServiceImpl), ServiceLifetime.Singleton);
-            if (!HasExactlyOneCtor(typeof(TServiceImpl)))
-            {
-                throw new ArgumentException("Service implementation has multiple constructors");
-            }
-
-            if (typeof(TServiceImpl).IsAbstract || typeof(TServiceImpl).IsInterface)
-            {
-                throw new ArgumentException("Service implementation cannot be abstract class or interface");
-            }
-
-            if (!_serviceDescriptors.TryAdd(typeof(TService), serviceDescriptor))
-            {
-                throw new ArgumentException("Service is already registered");
-            }
-        }
-
-        public void RegisterSingleton<TService, TServiceImpl>(TServiceImpl serviceImpl) where TServiceImpl : TService
-        {
-            var serviceDescriptor = new ServiceDescriptor(typeof(TService), typeof(TServiceImpl),
-                serviceImpl, ServiceLifetime.Singleton);
-            if (!_serviceDescriptors.TryAdd(typeof(TService), serviceDescriptor))
-            {
-                throw new ArgumentException("Service is already registered");
-            }
-        }
-
-        public void RegisterTransient<T>()
-        {
-            var serviceDescriptor = new ServiceDescriptor(typeof(T), ServiceLifetime.Transient);
-
-            if (!HasExactlyOneCtor(typeof(T)))
-            {
-                throw new ArgumentException("Service has multiple constructors");
-            }
-
-            if (!_serviceDescriptors.TryAdd(typeof(T), serviceDescriptor))
-            {
-                throw new ArgumentException("Service is already registered");
-            }
-        }
-
-        public void RegisterTransient<TService, TServiceImpl>() where TServiceImpl : TService
-        {
-            var serviceDescriptor = new ServiceDescriptor(typeof(TService), typeof(TServiceImpl), ServiceLifetime.Transient);
-
-            if (!HasExactlyOneCtor(typeof(TServiceImpl)))
-            {
-                throw new ArgumentException("Service has multiple constructors");
-            }
-
-            if (!_serviceDescriptors.TryAdd(typeof(TService), serviceDescriptor))
-            {
-                throw new ArgumentException("Service is already registered");
-            }
-        }
+        private readonly IDictionary<Type, ServiceDescriptor> _serviceDescriptors =
+            new Dictionary<Type, ServiceDescriptor>();
 
         public ServiceContainer CreateServiceContainer()
         {
             return new(_serviceDescriptors);
         }
 
-        private bool HasExactlyOneCtor(Type type)
+        public void RegisterSingleton<TService>()
         {
-            return type.GetConstructors().Length == 1;
+            EnsureServiceHasSingleCtor<TService>();
+            
+            var serviceDescriptor = new ServiceDescriptor(typeof(TService), ServiceLifetime.Singleton);
+            AddServiceDescriptor(serviceDescriptor);
+        }
+
+        public void RegisterSingleton<TService>(TService serviceImplementation)
+        {
+            var serviceDescriptor = new ServiceDescriptor(typeof(TService), ServiceLifetime.Singleton)
+            {
+                Implementation = serviceImplementation
+            };
+            AddServiceDescriptor(serviceDescriptor);
+        }
+
+        public void RegisterSingleton<TService, TServiceImpl>() where TServiceImpl : TService
+        {
+            EnsureServiceHasSingleCtor<TServiceImpl>();
+
+            var serviceDescriptor = new ServiceDescriptor(typeof(TService), ServiceLifetime.Singleton)
+            {
+                ImplementationType = typeof(TServiceImpl)
+            };
+
+            if (typeof(TServiceImpl).IsAbstract || typeof(TServiceImpl).IsInterface)
+            {
+                throw new ArgumentException("Service implementation cannot be abstract class or interface");
+            }
+
+            AddServiceDescriptor(serviceDescriptor);
+        }
+
+        public void RegisterSingleton<TService, TServiceImpl>(TServiceImpl serviceImpl) where TServiceImpl : TService
+        {
+            var serviceDescriptor = new ServiceDescriptor(typeof(TService), ServiceLifetime.Singleton)
+            {
+                ImplementationType = typeof(TServiceImpl),
+                Implementation = serviceImpl
+
+            };
+            AddServiceDescriptor(serviceDescriptor);
+        }
+
+        public void RegisterTransient<TService>()
+        {
+            EnsureServiceHasSingleCtor<TService>();
+            
+            var serviceDescriptor = new ServiceDescriptor(typeof(TService), ServiceLifetime.Transient);
+            AddServiceDescriptor(serviceDescriptor);
+        }
+
+        public void RegisterTransient<TService, TServiceImpl>() where TServiceImpl : TService
+        {
+            EnsureServiceHasSingleCtor<TServiceImpl>();
+            
+            var serviceDescriptor = new ServiceDescriptor(typeof(TService), ServiceLifetime.Transient)
+            {
+                ImplementationType = typeof(TServiceImpl)
+            };
+            AddServiceDescriptor(serviceDescriptor);
+        }
+
+        private void EnsureServiceHasSingleCtor<TService>()
+        {
+            if (typeof(TService).GetConstructors().Length != 1)
+            {
+                throw new ArgumentException("Service must have exactly one constructor");
+            }
+        }
+
+        private void AddServiceDescriptor(ServiceDescriptor serviceDescriptor)
+        {
+            if (!_serviceDescriptors.TryAdd(serviceDescriptor.ServiceType, serviceDescriptor))
+            {
+                throw new ArgumentException("Service is already registered");
+            }
         }
     }
 }

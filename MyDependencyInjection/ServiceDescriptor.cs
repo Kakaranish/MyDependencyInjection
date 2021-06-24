@@ -5,28 +5,15 @@ namespace MyDependencyInjection
 {
     public class ServiceDescriptor
     {
+        private object _implementation;
+        
         public Type ServiceType { get; }
-        public Type ImplementationType { get; }
-        public object Implementation { get; internal set; }
         public ServiceLifetime Lifetime { get; }
-
-
-        public ServiceDescriptor(Type serviceType, Type implementationType, object implementation, ServiceLifetime lifetime)
-            : this(serviceType, implementation, lifetime)
+        public Type ImplementationType { get; init; }
+        public object Implementation
         {
-            ServiceType = serviceType;
-            ImplementationType = implementationType ?? throw new ArgumentNullException(nameof(implementationType));
-            Implementation = implementation;
-            Lifetime = lifetime;
-        }
-        public ServiceDescriptor(Type serviceType, Type serviceImplType, ServiceLifetime lifetime) : this(serviceType, lifetime)
-        {
-            ImplementationType = serviceImplType ?? throw new ArgumentNullException(nameof(serviceImplType));
-        }
-
-        public ServiceDescriptor(Type serviceType, object implementation, ServiceLifetime lifetime) : this(serviceType, lifetime)
-        {
-            Implementation = implementation ?? throw new ArgumentNullException(nameof(implementation));
+            get => _implementation;
+            init => _implementation = value;
         }
 
         public ServiceDescriptor(Type serviceType, ServiceLifetime lifetime)
@@ -36,6 +23,11 @@ namespace MyDependencyInjection
             if (!Enum.IsDefined(typeof(ServiceLifetime), lifetime))
                 throw new InvalidEnumArgumentException(nameof(lifetime), (int)lifetime, typeof(ServiceLifetime));
             Lifetime = lifetime;
+        }
+
+        internal void SetImplementation(object implementation)
+        {
+            _implementation = implementation;
         }
     }
 }
