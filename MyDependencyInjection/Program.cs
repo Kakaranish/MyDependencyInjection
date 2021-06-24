@@ -8,13 +8,15 @@ namespace MyDependencyInjection
         {
             var serviceCollection = new ServiceCollection();
 
-            serviceCollection.RegisterSingleton<IGuidProvider, GuidProvider>();
+            serviceCollection.RegisterTransient<IGuidProvider, GuidProvider>();
             serviceCollection.RegisterSingleton<IGuidPrinter, GuidPrinter>();
 
             var serviceContainer = serviceCollection.CreateServiceContainer();
-            var guidPrinter = serviceContainer.GetService<IGuidPrinter>();
+            var guidPrinter1 = serviceContainer.GetService<IGuidPrinter>();
+            var guidPrinter2 = serviceContainer.GetService<IGuidPrinter>();
 
-            guidPrinter.Print();
+            guidPrinter1.Print();
+            guidPrinter2.Print();
         }
     }
 }

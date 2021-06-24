@@ -62,7 +62,28 @@ namespace MyDependencyInjection
         public void RegisterTransient<T>()
         {
             var serviceDescriptor = new ServiceDescriptor(typeof(T), ServiceLifetime.Transient);
+
+            if (!HasExactlyOneCtor(typeof(T)))
+            {
+                throw new ArgumentException("Service has multiple constructors");
+            }
+
             if (!_serviceDescriptors.TryAdd(typeof(T), serviceDescriptor))
+            {
+                throw new ArgumentException("Service is already registered");
+            }
+        }
+
+        public void RegisterTransient<TService, TServiceImpl>() where TServiceImpl : TService
+        {
+            var serviceDescriptor = new ServiceDescriptor(typeof(TService), typeof(TServiceImpl), ServiceLifetime.Transient);
+
+            if (!HasExactlyOneCtor(typeof(TServiceImpl)))
+            {
+                throw new ArgumentException("Service has multiple constructors");
+            }
+
+            if (!_serviceDescriptors.TryAdd(typeof(TService), serviceDescriptor))
             {
                 throw new ArgumentException("Service is already registered");
             }

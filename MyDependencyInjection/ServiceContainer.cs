@@ -20,28 +20,24 @@ namespace MyDependencyInjection
                 throw new ArgumentException($"There is no service of type {serviceType.Name} registered");
             }
 
-            if (serviceDescriptor.Lifetime == ServiceLifetime.Singleton)
+            if (serviceDescriptor.Lifetime == ServiceLifetime.Transient)
             {
-                if (serviceDescriptor.Implementation == null)
-                {
-                    var typeToInstantiate = serviceDescriptor.ImplementationType ?? serviceDescriptor.ServiceType;
-
-                    var ctor = typeToInstantiate.GetConstructors().SingleOrDefault();
-                    var ctorArgs = ctor.GetParameters().Select(x => GetService(x.ParameterType)).ToArray();
-
-                    var instance = Activator.CreateInstance(typeToInstantiate, ctorArgs);
-                    serviceDescriptor.Implementation = instance;
-                }
-
-                return serviceDescriptor.Implementation;
+                return InstantiateService(serviceDescriptor);
             }
-            //if (serviceDescriptor.Lifetime == ServiceLifetime.Transient)
-            //{
-            //    var instance = Activator.CreateInstance<T>();
-            //    return instance;
-            //}
 
-            throw new NotImplementedException();
+            return serviceDescriptor.Implementation ?? (serviceDescriptor.Implementation = InstantiateService(serviceDescriptor));
+        }
+
+        private object InstantiateService(ServiceDescriptor serviceDescriptor)
+        {
+            var typeToInstantiate = serviceDescriptor.ImplementationType ?? serviceDescriptor.ServiceType;
+
+            var ctor = typeToInstantiate.GetConstructors().SingleOrDefault();
+            var ctorArgs = ctor.GetParameters().Select(x => GetService(x.ParameterType)).ToArray();
+
+            var instance = Activator.CreateInstance(typeToInstantiate, ctorArgs);
+
+            return instance;
         }
 
         public T GetService<T>()
